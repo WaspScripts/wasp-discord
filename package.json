@@ -1,0 +1,30 @@
+{
+	"name": "wasp-discord",
+	"module": "src/index.ts",
+	"type": "module",
+	"version": "3.0.0",
+	"scripts": {
+		"gentypes": "bun run src/lib/types/update.ts",
+		"format": "prettier --write .",
+		"lint": "prettier --check . && eslint .",
+		"start": "bun run src/index.ts",
+		"dev": "bun --watch run src/index.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@typescript-eslint/eslint-plugin": "^8.51.0",
+		"@typescript-eslint/parser": "^8.51.0",
+		"eslint": "^9.39.2",
+		"eslint-config-prettier": "^10.1.8",
+		"prettier": "^3.7.4"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"@supabase/supabase-js": "^2.89.0",
+		"bufferutil": "^4.1.0",
+		"discord.js": "^14.25.1",
+		"zlib-sync": "^0.1.10"
+	}
+}
