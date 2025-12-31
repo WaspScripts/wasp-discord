@@ -6,6 +6,7 @@ import {
 	Collection,
 	CommandInteraction,
 	CommandInteractionOptionResolver,
+	Events,
 	Guild,
 	GuildMember,
 	ModalSubmitInteraction,
@@ -21,19 +22,20 @@ import {
 import type { Database } from "$lib/types/supabase"
 import { Glob } from "bun"
 import { getGuildChannel, getGuildRole } from "$lib/utils"
+import { getDatabaseListener, supabase } from "./supabase"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
-export type ChannelKey = "management" | "achievements" | "bans"
-export type MappedChannel = Record<ChannelKey, GuildTextBasedChannel>
-export type MappedRole = Record<Roles, Role>
+const channelKeys = ["management", "achievements", "bans"] as const
+type ChannelKey = (typeof channelKeys)[number]
 
-export type Roles = Database["profiles"]["Enums"]["roles"]
+export type DBRole = Database["profiles"]["Enums"]["roles"]
 
 export interface CommandInteractionEx extends CommandInteraction {
 	member: GuildMember
 }
 
 export type Command = ApplicationCommandData & {
-	roles?: Roles[]
+	roles?: DBRole[]
 	run: (options: {
 		client: ClientEx
 		caller: string
@@ -47,7 +49,7 @@ export interface ModalSubmitInteractionEx extends ModalSubmitInteraction {
 }
 
 export type Modal = ApplicationCommandData & {
-	roles?: Roles[]
+	roles?: DBRole[]
 	run: (options: {
 		client: ClientEx
 		member: GuildMember
@@ -61,7 +63,7 @@ export interface ButtonInteractionEx extends ButtonInteraction {
 }
 
 export type Button = ApplicationCommandData & {
-	roles?: Roles[]
+	roles?: DBRole[]
 	run: (options: { client: ClientEx; member: GuildMember; interaction: ButtonInteractionEx }) => void
 }
 
@@ -72,14 +74,17 @@ export class ClientEvent<Key extends keyof ClientEvents> {
 	) {}
 }
 
+export const CLIENT_ROLES = ["contributor", "tester", "scripter"]
+
 export class ClientEx extends Client {
-	guild: Guild = {} as Guild
-	channelsMap: MappedChannel = {} as MappedChannel
-	roles: MappedRole = {} as MappedRole
+	guild = {} as Guild
+	channelsMap = {} as Record<ChannelKey, GuildTextBasedChannel | undefined>
+	roles = {} as Record<DBRole, Role>
 
 	commands: Collection<string, Command> = new Collection()
 	modals: Collection<string, Modal> = new Collection()
 	buttons: Collection<string, Button> = new Collection()
+	dbListener = {} as RealtimeChannel
 
 	async registerModules() {
 		const commands: ApplicationCommandDataResolvable[] = []
@@ -137,26 +142,38 @@ export class ClientEx extends Client {
 			commands.push(button)
 		}
 
-		this.once("clientReady", async () => {
+		this.once(Events.ClientReady, async () => {
 			if (!this.user) throw new Error("Client as no user assigned.")
+
+			const rolesPromise = supabase.schema("profiles").rpc("get_roles_enum")
 
 			for (const guild of this.guilds.cache.values()) {
 				if (guild.id !== process.env.GUILD_ID) continue
-				console.log("Setting up guild:", guild.name, " id: ", guild.id)
 
+				console.log("Setting up guild:", guild.name, " id: ", guild.id)
 				this.guild = guild
-				const channelKeys = Object.keys(this.channelsMap) as ChannelKey[]
-				const roleKeys = Object.keys(this.roles) as Roles[]
+
+				const { data, error } = await rolesPromise
+				if (error) {
+					throw new Error("Database function error: :\n```json\n" + JSON.stringify(error) + "\n```")
+				}
+
+				const roleKeys = data as DBRole[]
 
 				const [channels, roles] = await Promise.all([
 					Promise.all(channelKeys.map((key) => getGuildChannel(guild, key))),
 					Promise.all(roleKeys.map((key) => getGuildRole(guild, key)))
 				])
 
-				channelKeys.forEach((key, i) => (this.channelsMap[key] = channels[i]))
-				roleKeys.forEach((key, i) => (this.roles[key] = roles[i]))
-				console.log("Registering commands to:", guild.name)
+				channelKeys.forEach((key, i) => {
+					this.channelsMap[key] = channels[i]
+				})
 
+				roleKeys.forEach((key, i) => {
+					this.roles[key] = roles[i]
+				})
+
+				console.log("Registering commands to:", guild.name)
 				await guild.commands.set(commands)
 			}
 
@@ -166,6 +183,8 @@ export class ClientEx extends Client {
 			})
 
 			console.log(`Client ready! Logged in as ${this.user.username}`)
+
+			this.dbListener = getDatabaseListener(this)
 		})
 	}
 

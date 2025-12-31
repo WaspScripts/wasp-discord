@@ -1,7 +1,7 @@
 import { ClientEvent } from "$lib/client"
-import { ForumChannel } from "discord.js"
+import { Events, ForumChannel } from "discord.js"
 
-export default new ClientEvent("threadUpdate", async (client, thread) => {
+export default new ClientEvent(Events.ThreadUpdate, async (client, thread) => {
 	if (thread.guild !== client.guild) return
 	const parent = thread.parent as ForumChannel
 	if (parent.name !== "🙋help") return

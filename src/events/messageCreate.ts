@@ -1,7 +1,7 @@
-import { MessageType, TextChannel } from "discord.js"
+import { MessageType, TextChannel, Events } from "discord.js"
 import { ClientEvent } from "$lib/client"
 
-export default new ClientEvent("messageCreate", async (client, message) => {
+export default new ClientEvent(Events.MessageCreate, async (client, message) => {
 	const { guild } = message
 	if (guild !== client.guild) return
 	if (message.author.bot) return

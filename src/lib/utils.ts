@@ -5,8 +5,8 @@ export function getGuildChannel(guild: Guild, channel: string) {
 	const result = guild.channels.cache.find(
 		(ch) => !ch.isDMBased() && ch.isTextBased() && ch.name.toLowerCase().includes(lowered)
 	)
-	if (!result) throw new Error(channel + " channel does not exist!")
-	return result as GuildTextBasedChannel
+
+	return result as GuildTextBasedChannel | undefined
 }
 
 export async function getGuildRole(guild: Guild, role: string) {

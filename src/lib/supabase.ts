@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "$lib/types/supabase"
+import { CLIENT_ROLES, ClientEx, type DBRole } from "./client"
 
 export const supabase = createClient<Database>(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
 	auth: { persistSession: false }
@@ -26,4 +27,27 @@ export async function getWSID(user: string) {
 	if (data == null) return null
 
 	return data.id
+}
+
+export function getDatabaseListener(client: ClientEx) {
+	return supabase
+		.channel("profiles-role-changes-listener")
+		.on("postgres_changes", { event: "UPDATE", schema: "profiles", table: "profiles" }, async (payload) => {
+			const { discord, role } = payload.new
+			const member = client.guild.members.cache.get(discord)
+			if (!member) return
+
+			if (client.roles[role as DBRole]) {
+				console.log(
+					"Adding role: ",
+					client.roles[role as DBRole].name,
+					" to user: ",
+					member.displayName,
+					" id: ",
+					member.id
+				)
+				await member.roles.add(client.roles[role as DBRole]).catch(console.error)
+			}
+		})
+		.subscribe()
 }
