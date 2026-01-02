@@ -7,6 +7,7 @@
 		"gentypes": "bun run src/lib/types/update.ts",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
+		"build": "bun build src/index.ts --outdir build --target=bun",
 		"start": "bun run src/index.ts",
 		"dev": "bun --watch run src/index.ts"
 	},
