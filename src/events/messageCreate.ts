@@ -17,10 +17,10 @@ export default new ClientEvent(Events.MessageCreate, async (client, message) => 
 					contentType +
 					"` is not allowed on this server. If this seems like a mistake contact a moderator and let them know 😄\n\n"
 				msg += "This message will self-destruct in **15** seconds."
-				const reply = await message.reply(msg)
-				await message.delete()
+				const reply = await message.reply(msg).catch((e) => console.error(e))
+				await message.delete().catch((e) => console.error(e))
 
-				setTimeout(async () => await reply.delete(), 15000)
+				if (reply) setTimeout(async () => await reply.delete().catch((e) => console.error(e)), 15000)
 				return
 			}
 
@@ -36,10 +36,10 @@ export default new ClientEvent(Events.MessageCreate, async (client, message) => 
 					contentType +
 					"` is not allowed on this channel. If this seems like a mistake contact a moderator and let them know 😄\n\n"
 				msg += "This message will self-destruct in **15** seconds."
-				const reply = await message.reply(msg)
-				await message.delete()
+				const reply = await message.reply(msg).catch((e) => console.error(e))
+				await message.delete().catch((e) => console.error(e))
 
-				setTimeout(async () => await reply.delete(), 15000)
+				if (reply) setTimeout(async () => await reply.delete().catch((e) => console.error(e)), 15000)
 				return
 			}
 		}
@@ -53,10 +53,10 @@ export default new ClientEvent(Events.MessageCreate, async (client, message) => 
 			let msg = "<@" + message.author.id + "> your message has been deleted.\n\n"
 			msg += "This is a media only server, please post a picture of your achievement 😄\n\n"
 			msg += "This message will self-destruct in **15** seconds."
-			const reply = await message.reply(msg)
-			await message.delete()
+			const reply = await message.reply(msg).catch((e) => console.error(e))
+			await message.delete().catch((e) => console.error(e))
 
-			setTimeout(async () => await reply.delete(), 15000)
+			if (reply) setTimeout(async () => await reply.delete().catch((e) => console.error(e)), 15000)
 			return
 		}
 
@@ -65,14 +65,16 @@ export default new ClientEvent(Events.MessageCreate, async (client, message) => 
 			msg += "Please keep conversations within threads.\n\n"
 			msg += "This message will self-destruct in **30** seconds."
 
-			const reply = await message.reply(msg)
-			await message.delete()
-			setTimeout(async () => await reply.delete(), 30000)
+			const reply = await message.reply(msg).catch((e) => console.error(e))
+			await message.delete().catch((e) => console.error(e))
+			if (reply) setTimeout(async () => await reply.delete().catch((e) => console.error(e)), 30000)
 			return
 		}
 
-		const thread = await message.startThread({ name: "Achievement #" + (channel.threads.cache.size + 1) })
-		await thread.send(":tada:")
+		const thread = await message
+			.startThread({ name: "Achievement #" + (channel.threads.cache.size + 1) })
+			.catch((e) => console.error(e))
+		await thread?.send(":tada:")
 	}
 
 	if (message.channel === client.channelsMap.bans) {
@@ -100,17 +102,19 @@ export default new ClientEvent(Events.MessageCreate, async (client, message) => 
 			msg += "```\n\n"
 			msg += "This message will self-destruct in **30** seconds."
 
-			const reply = await message.reply(msg)
-			await message.delete()
-			setTimeout(async () => await reply.delete(), 30000)
+			const reply = await message.reply(msg).catch((e) => console.error(e))
+			await message.delete().catch((e) => console.error(e))
+			if (reply) setTimeout(async () => await reply.delete().catch((e) => console.error(e)), 30000)
 			return
 		}
 
-		const thread = await message.startThread({ name: "Ban #" + (channel.threads.cache.size + 1) })
+		const thread = await message
+			.startThread({ name: "Ban #" + (channel.threads.cache.size + 1) })
+			.catch((e) => console.error(e))
 		let msg =
 			"Please take posts on this channel with a grain of salt as anyone can post here with no requirements whatsoever "
 		msg +=
 			" and try to not attack anyone just because you don't believe them or simply don't agree with them."
-		await thread.send(msg)
+		await thread?.send(msg).catch((e) => console.error(e))
 	}
 })
