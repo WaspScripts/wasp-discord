@@ -16,7 +16,7 @@ export default new ClientEvent(Events.MessageUpdate, async (client, oldMsg, newM
 	const { member } = newMsg
 	if (!member) return
 	console.log(member.guild.id)
-	const role = getRole(member, ["administrator", "moderator", "scripter"])
+	const role = getRole(member, ["administrator", "moderator", "scripter", "tester"])
 	if (role) return
 
 	const reply = await newMsg
