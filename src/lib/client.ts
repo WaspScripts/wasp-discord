@@ -88,10 +88,9 @@ export class ClientEx extends Client {
 
 	async registerModules() {
 		const commands: ApplicationCommandDataResolvable[] = []
-		let path = process.cwd() + "/src/interactions/commands/"
-		let glob = new Glob(path + "**/*{.ts,.js}")
-
-		for await (const file of glob.scan(".")) {
+		const commandsPath = process.cwd() + "/src/interactions/commands/"
+		const commandsGlob = new Glob(commandsPath + "**/*{.ts,.js}")
+		for await (const file of commandsGlob.scan(".")) {
 			const imported = await import(file)
 			if (!imported) return
 			const command: Command = imported.default
@@ -114,10 +113,9 @@ export class ClientEx extends Client {
 			commands.push(command)
 		}
 
-		path = process.cwd() + "/src/interactions/modals/"
-		glob = new Glob(path + "**/*{.ts,.js}")
-
-		for await (const file of glob.scan(".")) {
+		const modalsPath = process.cwd() + "/src/interactions/modals/"
+		const modalsGlob = new Glob(modalsPath + "**/*{.ts,.js}")
+		for await (const file of modalsGlob.scan(".")) {
 			const imported = await import(file)
 			if (!imported) return
 			const modal: Modal = imported.default
@@ -128,10 +126,9 @@ export class ClientEx extends Client {
 			commands.push(modal)
 		}
 
-		path = process.cwd() + "/src/interactions/buttons/"
-		glob = new Glob(path + "**/*{.ts,.js}")
-
-		for await (const file of glob.scan(".")) {
+		const buttonsPath = process.cwd() + "/src/interactions/buttons/"
+		const buttonsGlob = new Glob(buttonsPath + "**/*{.ts,.js}")
+		for await (const file of buttonsGlob.scan(".")) {
 			const imported = await import(file)
 			if (!imported) return
 			const button: Button = imported.default

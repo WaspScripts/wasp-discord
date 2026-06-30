@@ -17,7 +17,6 @@ type ProductCacheEntry = {
 }
 
 const CACHE_TTL = 60 * 60 * 1000
-
 const productsMap: Map<string, ProductCacheEntry> = new Collection()
 
 function getProductName(id: string) {
