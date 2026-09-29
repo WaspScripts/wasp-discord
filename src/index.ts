@@ -1,21 +1,25 @@
 import { ClientEx } from "$lib/client"
-import { GatewayIntentBits, Partials } from "discord.js"
+import { GatewayIntentBits, Options, Partials } from "discord.js"
 
 export const client = new ClientEx({
 	intents: [
-		GatewayIntentBits.DirectMessages,
-		GatewayIntentBits.GuildIntegrations,
-		GatewayIntentBits.DirectMessagePolls,
-		GatewayIntentBits.DirectMessageReactions,
-		GatewayIntentBits.DirectMessageTyping,
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMembers,
+		GatewayIntentBits.GuildModeration,
 		GatewayIntentBits.GuildMessages,
-		GatewayIntentBits.GuildMessageReactions,
-		GatewayIntentBits.MessageContent,
-		32767
+		GatewayIntentBits.MessageContent
 	],
-	partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember]
+	partials: [Partials.Message, Partials.User, Partials.GuildMember],
+	makeCache: Options.cacheWithLimits({
+		...Options.DefaultMakeCacheSettings,
+		MessageManager: 0,
+		ReactionManager: 0,
+		PresenceManager: 0,
+		VoiceStateManager: 0,
+		GuildInviteManager: 0,
+		GuildStickerManager: 0,
+		GuildEmojiManager: 0
+	})
 })
 
 client.start()

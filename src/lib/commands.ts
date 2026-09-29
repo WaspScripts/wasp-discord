@@ -140,7 +140,7 @@ export async function getSubscriptions(member: GuildMember, wsid: string, page: 
 		.setCustomId("subscriptions_next")
 		.setLabel("Next")
 		.setStyle(ButtonStyle.Secondary)
-		.setDisabled((page + 1) * 5 >= (count ?? 0))
+		.setDisabled((page + 1) * amount >= (count ?? 0))
 
 	const row = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(previous, next)
 
@@ -150,8 +150,6 @@ export async function getSubscriptions(member: GuildMember, wsid: string, page: 
 export async function getFreeAccess(wsid: string, page: number) {
 	let message = "# Free Access\n"
 
-	console.log("page: ", page, ", amount: ", amount)
-	console.log("from: ", page * amount, " to: ", page * amount + amount - 1)
 	const { data, error, count } = await supabase
 		.schema("profiles")
 		.from("free_access")
@@ -237,7 +235,6 @@ export async function getFreeAccess(wsid: string, page: number) {
 		.setStyle(ButtonStyle.Secondary)
 		.setDisabled(page < 1)
 
-	console.log("count: ", count)
 	const next = new ButtonBuilder()
 		.setCustomId("access_next")
 		.setLabel("Next")

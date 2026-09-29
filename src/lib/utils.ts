@@ -16,6 +16,10 @@ export async function getGuildRole(guild: Guild, role: string) {
 	return result
 }
 
+export async function fetchMember(guild: Guild, id: string) {
+	return guild.members.fetch(id).catch(() => null)
+}
+
 export function getRole(member: GuildMember, roles: string[]) {
 	return member.roles.cache.find((role) => roles.includes(role.name.toLowerCase()))
 }

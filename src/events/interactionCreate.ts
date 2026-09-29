@@ -1,5 +1,5 @@
 import { CommandInteractionOptionResolver, Events, MessageFlags } from "discord.js"
-import { getRole } from "$lib/utils"
+import { fetchMember, getRole } from "$lib/utils"
 import {
 	ClientEvent,
 	type ButtonInteractionEx,
@@ -21,7 +21,7 @@ export default new ClientEvent(Events.InteractionCreate, async (client, interact
 		if (!button)
 			return interaction.reply({ content: "That button does not exist!", flags: MessageFlags.Ephemeral })
 
-		const member = client.guild.members.cache.get(caller)
+		const member = await fetchMember(client.guild, caller)
 		if (!member) {
 			return interaction.reply({
 				content: "Only members of waspscripts.dev server can use this command.",
@@ -40,7 +40,7 @@ export default new ClientEvent(Events.InteractionCreate, async (client, interact
 		}
 
 		try {
-			button.run({
+			await button.run({
 				client,
 				member,
 				interaction: interaction as ButtonInteractionEx
@@ -48,6 +48,7 @@ export default new ClientEvent(Events.InteractionCreate, async (client, interact
 		} catch (error) {
 			console.error("Interaction failed: " + interaction.customId + " error: " + error)
 		}
+		return
 	}
 
 	if (interaction.isModalSubmit()) {
@@ -56,7 +57,7 @@ export default new ClientEvent(Events.InteractionCreate, async (client, interact
 			return interaction.reply({ content: "That modal does not exist!", flags: MessageFlags.Ephemeral })
 		}
 
-		const member = client.guild.members.cache.get(caller)
+		const member = await fetchMember(client.guild, caller)
 		if (!member) {
 			return interaction.reply({
 				content: "Only members of waspscripts.dev server can use this command.",
@@ -75,7 +76,7 @@ export default new ClientEvent(Events.InteractionCreate, async (client, interact
 		}
 
 		try {
-			modal.run({
+			await modal.run({
 				client,
 				member,
 				interaction: interaction as ModalSubmitInteractionEx,
@@ -84,6 +85,7 @@ export default new ClientEvent(Events.InteractionCreate, async (client, interact
 		} catch (error) {
 			console.error("Interaction failed: " + interaction.customId + " error: " + error)
 		}
+		return
 	}
 
 	if (
@@ -101,7 +103,7 @@ export default new ClientEvent(Events.InteractionCreate, async (client, interact
 	const { roles } = command
 
 	if (roles && roles.length > 0) {
-		const member = client.guild.members.cache.get(caller)
+		const member = await fetchMember(client.guild, caller)
 		if (!member) {
 			return interaction.reply({
 				content: "Only " + roles.join("/") + " roles in waspscripts.dev can use this command.",
@@ -119,7 +121,7 @@ export default new ClientEvent(Events.InteractionCreate, async (client, interact
 	}
 
 	try {
-		command.run({
+		await command.run({
 			client,
 			caller,
 			interaction: interaction as CommandInteractionEx,

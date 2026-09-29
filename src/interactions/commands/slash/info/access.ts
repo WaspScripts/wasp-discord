@@ -10,6 +10,7 @@ const command: Command = {
 	integrationTypes: [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall],
 	options: [{ type: 6, name: "user", description: "Discord user", required: true }],
 	run: async ({ interaction, args }) => {
+		await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 		const user = args.data[0].value as string
 		if (user == "") {
 			return await interaction.followUp({

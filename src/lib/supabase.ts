@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "$lib/types/supabase"
-import { CLIENT_ROLES, ClientEx, type DBRole } from "./client"
+import { ClientEx, type DBRole } from "./client"
+import { fetchMember } from "./utils"
 
 export const supabase = createClient<Database>(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
 	auth: { persistSession: false }
@@ -29,25 +30,26 @@ export async function getWSID(user: string) {
 	return data.id
 }
 
+export const pendingRoleWrites = new Map<string, DBRole | null>()
+
 export function getDatabaseListener(client: ClientEx) {
 	return supabase
 		.channel("profiles-role-changes-listener")
 		.on("postgres_changes", { event: "UPDATE", schema: "profiles", table: "profiles" }, async (payload) => {
 			const { discord, role } = payload.new
-			const member = client.guild.members.cache.get(discord)
-			if (!member) return
-
-			if (client.roles[role as DBRole]) {
-				console.log(
-					"Adding role: ",
-					client.roles[role as DBRole].name,
-					" to user: ",
-					member.displayName,
-					" id: ",
-					member.id
-				)
-				await member.roles.add(client.roles[role as DBRole]).catch(console.error)
+			if (pendingRoleWrites.has(discord) && pendingRoleWrites.get(discord) === role) {
+				pendingRoleWrites.delete(discord)
+				return
 			}
+
+			const guildRole = client.roles[role as DBRole]
+			if (!guildRole) return
+
+			const member = await fetchMember(client.guild, discord)
+			if (!member || member.roles.cache.has(guildRole.id)) return
+
+			console.log("Adding role: ", guildRole.name, " to user: ", member.displayName, " id: ", member.id)
+			await member.roles.add(guildRole).catch(console.error)
 		})
 		.subscribe()
 }

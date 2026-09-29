@@ -1,5 +1,5 @@
 import { CLIENT_ROLES, ClientEvent, type DBRole } from "$lib/client"
-import { getDatabaseListener, getWSID, supabase } from "$lib/supabase"
+import { getWSID, pendingRoleWrites, supabase } from "$lib/supabase"
 import { Collection, Events, Role } from "discord.js"
 
 const ROLE_ORDER = [
@@ -25,36 +25,33 @@ function mapRoles(roles: Collection<string, Role>) {
 	return result
 }
 
-export default new ClientEvent(Events.GuildMemberUpdate, async (client, _old, member) => {
+export default new ClientEvent(Events.GuildMemberUpdate, async (_client, old, member) => {
 	const { guild } = member
 	if (guild.id !== process.env.GUILD_ID) return
-
-	const wsidPromise = getWSID(member.id)
+	if (!old.partial && old.roles.highest.id === member.roles.highest.id) return
 
 	const role = member.roles.highest.name.toLowerCase()
+	let mapped: DBRole | null = null
 
-	if (role == "@everyone") {
-		const wsid = await wsidPromise
-		if (!wsid) return
+	if (role !== "@everyone") {
+		const roles = mapRoles(
+			guild.roles.cache
+				.filter((r) => r.name !== "@everyone" && !r.managed)
+				.sort((a, b) => a.position - b.position)
+		)
 
-		await client.dbListener.unsubscribe()
-		await supabase.schema("profiles").from("profiles").update({ role: null }).eq("id", wsid)
-		client.dbListener = getDatabaseListener(client)
+		const found = roles.get(role)
+		if (!found) return //role too low/high for waspbot to manage. AKA, database is the one that can set/remove it
+		mapped = found
 	}
 
-	const roles = mapRoles(
-		guild.roles.cache
-			.filter((r) => r.name !== "@everyone" && !r.managed)
-			.sort((a, b) => a.position - b.position)
-	)
-
-	const mapped = roles.get(role)
-	if (!mapped) return //role too low/high for waspbot to manage. AKA, database is the one that can set/remove it
-
-	const wsid = await wsidPromise
+	const wsid = await getWSID(member.id)
 	if (!wsid) return
 
-	await client.dbListener.unsubscribe()
-	await supabase.schema("profiles").from("profiles").update({ role: mapped }).eq("id", wsid)
-	client.dbListener = getDatabaseListener(client)
+	pendingRoleWrites.set(member.id, mapped)
+	const { error } = await supabase.schema("profiles").from("profiles").update({ role: mapped }).eq("id", wsid)
+	if (error) {
+		pendingRoleWrites.delete(member.id)
+		console.error(error)
+	}
 })

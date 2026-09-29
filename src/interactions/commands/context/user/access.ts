@@ -20,15 +20,16 @@ const command: Command = {
 		InteractionContextType.PrivateChannel
 	],
 	run: async ({ interaction }) => {
-		await interaction.deferReply({ flags: MessageFlags.Ephemeral })
+		const deferred = interaction.deferReply({ flags: MessageFlags.Ephemeral })
 		if (!interaction.isUserContextMenuCommand()) {
+			await deferred
 			return await interaction.followUp({
 				content: "Can't find interaction target.",
 				flags: MessageFlags.Ephemeral
 			})
 		}
 
-		const wsid = await getWSID(interaction.targetId)
+		const [wsid] = await Promise.all([getWSID(interaction.targetId), deferred])
 		if (!wsid)
 			return interaction.followUp({ content: "Can't find user WSID.", flags: MessageFlags.Ephemeral })
 

@@ -10,6 +10,7 @@ import {
 	Guild,
 	GuildMember,
 	ModalSubmitInteraction,
+	PermissionFlagsBits,
 	Role,
 	type ActionRowModalData,
 	type ApplicationCommandData,
@@ -41,7 +42,7 @@ export type Command = ApplicationCommandData & {
 		caller: string
 		interaction: CommandInteractionEx
 		args: CommandInteractionOptionResolver
-	}) => void
+	}) => Promise<unknown> | void
 }
 
 export interface ModalSubmitInteractionEx extends ModalSubmitInteraction {
@@ -55,7 +56,7 @@ export type Modal = ApplicationCommandData & {
 		member: GuildMember
 		interaction: ModalSubmitInteractionEx
 		data: (ActionRowModalData | LabelModalData)[]
-	}) => void
+	}) => Promise<unknown> | void
 }
 
 export interface ButtonInteractionEx extends ButtonInteraction {
@@ -64,7 +65,24 @@ export interface ButtonInteractionEx extends ButtonInteraction {
 
 export type Button = ApplicationCommandData & {
 	roles?: DBRole[]
-	run: (options: { client: ClientEx; member: GuildMember; interaction: ButtonInteractionEx }) => void
+	run: (options: {
+		client: ClientEx
+		member: GuildMember
+		interaction: ButtonInteractionEx
+	}) => Promise<unknown> | void
+}
+
+export interface RawGatewayPacket {
+	op: number
+	s: number | null
+	t: string
+	d: unknown
+}
+
+declare module "discord.js" {
+	interface ClientEvents {
+		raw: [packet: RawGatewayPacket, shardId: number]
+	}
 }
 
 export class ClientEvent<Key extends keyof ClientEvents> {
@@ -149,6 +167,10 @@ export class ClientEx extends Client {
 
 				console.log("Setting up guild:", guild.name, " id: ", guild.id)
 				this.guild = guild
+
+				if (!guild.members.me?.permissions.has(PermissionFlagsBits.KickMembers)) {
+					console.warn("Missing Kick Members permission, join requests won't be received.")
+				}
 
 				const { data, error } = await rolesPromise
 				if (error) {
