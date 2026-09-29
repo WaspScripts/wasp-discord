@@ -1,5 +1,5 @@
 import { CLIENT_ROLES, ClientEvent, type DBRole } from "$lib/client"
-import { getWSID, pendingRoleWrites, supabase } from "$lib/supabase"
+import { pendingRoleWrites, supabase } from "$lib/supabase"
 import { Collection, Events, Role } from "discord.js"
 
 const ROLE_ORDER = [
@@ -45,13 +45,14 @@ export default new ClientEvent(Events.GuildMemberUpdate, async (_client, old, me
 		mapped = found
 	}
 
-	const wsid = await getWSID(member.id)
-	if (!wsid) return
-
 	pendingRoleWrites.set(member.id, mapped)
-	const { error } = await supabase.schema("profiles").from("profiles").update({ role: mapped }).eq("id", wsid)
-	if (error) {
+	const { error, count } = await supabase
+		.schema("profiles")
+		.from("profiles")
+		.update({ role: mapped }, { count: "exact" })
+		.eq("discord", member.id)
+	if (error || !count) {
 		pendingRoleWrites.delete(member.id)
-		console.error(error)
+		if (error) console.error(error)
 	}
 })

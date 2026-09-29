@@ -10,16 +10,17 @@ const command: Command = {
 	integrationTypes: [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall],
 	options: [{ type: 6, name: "user", description: "Discord user", required: true }],
 	run: async ({ interaction, args }) => {
-		await interaction.deferReply({ flags: MessageFlags.Ephemeral })
+		const deferred = interaction.deferReply({ flags: MessageFlags.Ephemeral })
 		const user = args.data[0].value as string
 		if (user == "") {
+			await deferred
 			return await interaction.followUp({
 				content: "Can't find interaction target.",
 				flags: MessageFlags.Ephemeral
 			})
 		}
 
-		const wsid = await getWSID(user)
+		const [wsid] = await Promise.all([getWSID(user), deferred])
 		if (!wsid)
 			return interaction.followUp({ content: "Can't find user WSID.", flags: MessageFlags.Ephemeral })
 

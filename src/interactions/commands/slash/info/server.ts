@@ -18,7 +18,7 @@ const command: Command = {
 		const totalUsers = interaction.guild.memberCount
 		const rolesCache = interaction.guild.roles.cache
 
-		const members = await guild.members.fetch()
+		const members = guild.members.cache.size >= totalUsers ? guild.members.cache : await guild.members.fetch()
 		const counts = new Map<string, number>()
 		for (const member of members.values()) {
 			for (const id of member.roles.cache.keys()) counts.set(id, (counts.get(id) ?? 0) + 1)

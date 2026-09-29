@@ -110,7 +110,7 @@ export class ClientEx extends Client {
 		const commandsGlob = new Glob(commandsPath + "**/*{.ts,.js}")
 		for await (const file of commandsGlob.scan(".")) {
 			const imported = await import(file)
-			if (!imported) return
+			if (!imported) continue
 			const command: Command = imported.default
 
 			switch (command.type) {
@@ -135,7 +135,7 @@ export class ClientEx extends Client {
 		const modalsGlob = new Glob(modalsPath + "**/*{.ts,.js}")
 		for await (const file of modalsGlob.scan(".")) {
 			const imported = await import(file)
-			if (!imported) return
+			if (!imported) continue
 			const modal: Modal = imported.default
 
 			console.log("Adding modal: ", modal.name)
@@ -148,7 +148,7 @@ export class ClientEx extends Client {
 		const buttonsGlob = new Glob(buttonsPath + "**/*{.ts,.js}")
 		for await (const file of buttonsGlob.scan(".")) {
 			const imported = await import(file)
-			if (!imported) return
+			if (!imported) continue
 			const button: Button = imported.default
 
 			console.log("Adding button: ", button.name)
@@ -225,7 +225,7 @@ export class ClientEx extends Client {
 		const glob = new Glob(path + "**/*{.ts,.js}")
 		for await (const file of glob.scan(".")) {
 			const imported = await import(file)
-			if (!imported) return
+			if (!imported) continue
 			const event = imported.default as ClientEvent<keyof ClientEvents>
 			this.on(event.event, (...args) =>
 				Promise.resolve()
