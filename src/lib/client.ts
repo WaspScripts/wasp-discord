@@ -88,7 +88,7 @@ declare module "discord.js" {
 export class ClientEvent<Key extends keyof ClientEvents> {
 	constructor(
 		public event: Key,
-		public run: (client: ClientEx, ...args: ClientEvents[Key]) => void
+		public run: (client: ClientEx, ...args: ClientEvents[Key]) => Promise<unknown> | void
 	) {}
 }
 
@@ -186,6 +186,19 @@ export class ClientEx extends Client {
 
 				channelKeys.forEach((key, i) => {
 					this.channelsMap[key] = channels[i]
+					const channel = channels[i]
+					const me = guild.members.me
+					if (
+						channel &&
+						me &&
+						!channel
+							.permissionsFor(me)
+							.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages])
+					) {
+						console.warn(
+							"Missing View Channel/Send Messages permission in " + key + " channel: " + channel.name
+						)
+					}
 				})
 
 				roleKeys.forEach((key, i) => {
@@ -214,7 +227,11 @@ export class ClientEx extends Client {
 			const imported = await import(file)
 			if (!imported) return
 			const event = imported.default as ClientEvent<keyof ClientEvents>
-			this.on(event.event, (...args) => event.run(this, ...args))
+			this.on(event.event, (...args) =>
+				Promise.resolve()
+					.then(() => event.run(this, ...args))
+					.catch((e) => console.error("Event " + event.event + " failed:", e))
+			)
 			console.log("Listening to event: ", event.event)
 		}
 	}

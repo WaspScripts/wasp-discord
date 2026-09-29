@@ -13,7 +13,7 @@ interface FormResponse {
 interface JoinRequest {
 	id: string
 	user_id: string
-	user: { username: string }
+	user?: { username: string }
 	application_status: "STARTED" | "SUBMITTED" | Decision
 	form_responses: FormResponse[]
 }
@@ -72,8 +72,9 @@ export default new ClientEvent(Events.Raw, async (client, packet) => {
 	const { guild_id, request } = packet.d as { guild_id: string; request?: JoinRequest }
 	if (guild_id !== process.env.GUILD_ID || !request) return
 	if (request.application_status !== "SUBMITTED" || inProgress.has(request.id)) return
+	if (!request.form_responses?.length) return
 
-	const applicant = "<@" + request.user_id + "> (" + request.user.username + ")"
+	const applicant = "<@" + request.user_id + "> (" + (request.user?.username ?? "unknown") + ")"
 	const log = (content: string) =>
 		client.channelsMap.management
 			?.send({ content, allowedMentions: { parse: [] } })
