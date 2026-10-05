@@ -11,7 +11,7 @@ export function getGuildChannel(guild: Guild, channel: string) {
 
 export async function getGuildRole(guild: Guild, role: string) {
 	const lowered = role.toLowerCase()
-	const result = guild.roles.cache.find((r) => r.name.toLowerCase().includes(lowered))
+	const result = guild.roles.cache.find((rl) => rl.name.toLowerCase().includes(lowered))
 	if (!result) throw new Error(role + " role does not exist!")
 	return result
 }

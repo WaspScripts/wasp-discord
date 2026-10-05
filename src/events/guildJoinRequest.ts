@@ -75,16 +75,9 @@ export default new ClientEvent(Events.Raw, async (client, packet) => {
 	if (!request.form_responses?.length) return
 
 	const applicant = "<@" + request.user_id + "> (" + (request.user?.username ?? "unknown") + ")"
-	const log = (content: string) =>
-		client.channelsMap.management
-			?.send({ content, allowedMentions: { parse: [] } })
-			.catch((e) => console.error(e))
 
-	const { decision, issues } = review(request.form_responses)
-	if (!decision) {
-		await log("Join request from " + applicant + " needs manual review:\n- " + issues.join("\n- "))
-		return
-	}
+	const { decision } = review(request.form_responses)
+	if (!decision) return
 
 	inProgress.add(request.id)
 	try {
@@ -94,12 +87,15 @@ export default new ClientEvent(Events.Raw, async (client, packet) => {
 					? { action: decision }
 					: { action: decision, rejection_reason: REJECTION_REASON }
 		})
-		await log((decision === "APPROVED" ? "Approved" : "Rejected") + " join request from " + applicant)
 	} catch (error) {
 		console.error(error)
-		await log(
+
+		const content =
 			"Failed to " + (decision === "APPROVED" ? "approve" : "reject") + " join request from " + applicant
-		)
+
+		await client.channelsMap.management
+			?.send({ content, allowedMentions: { parse: [] } })
+			.catch((e) => console.error(e))
 	} finally {
 		inProgress.delete(request.id)
 	}

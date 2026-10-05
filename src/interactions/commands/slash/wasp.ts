@@ -19,7 +19,6 @@ const command: Command = {
 				{ name: "Setup", value: "/setup" },
 				{ name: "Manual setup", value: "/tutorials/setup-windows-by-torwent" },
 				{ name: "Scripts", value: "/scripts" },
-				{ name: "Premium", value: "/premium" },
 				{ name: "FAQ", value: "/information/faqs" },
 				{ name: "Common Error", value: "/information/errors" },
 				{ name: "Tutorials", value: "/tutorials" }
