@@ -18,15 +18,14 @@ interface JoinRequest {
 	form_responses: FormResponse[]
 }
 
-const REJECT_ANSWERS: Record<string, string> = {
-	"Are you affiliated with Jagex in any way?": "Yes"
+const REJECT_ANSWERS: Record<string, number> = {
+	"Are you affiliated with Jagex in any way?": 0
 }
 
-const EXPECTED_ANSWERS: Record<string, string> = {
-	"Are you affiliated with Jagex in any way?": "No",
-	"You understand that botting/macroing is usually against the rules of video games and may be banned by doing so.":
-		"Yes",
-	"Lying to the questions above are against the terms of service of this platform": "I accept"
+const EXPECTED_ANSWERS: Record<string, number> = {
+	"Are you affiliated with Jagex in any way?": 1,
+	"You understand that botting/macroing is usually against the rules of video games and may be banned by doing so.": 0,
+	"Lying to the above is against the terms and conditions of this platform": 0
 }
 
 const MIN_TEXT_LENGTH = 3
@@ -52,12 +51,12 @@ function review(responses: FormResponse[]): { decision: Decision | null; issues:
 			}
 
 			case "MULTIPLE_CHOICE": {
-				const answer = field.choices?.[field.response as number]
+				const answer = field.response as number
 				if (REJECT_ANSWERS[field.label] === answer) return { decision: "REJECTED", issues: [] }
 
 				const expected = EXPECTED_ANSWERS[field.label]
 				if (expected === undefined) issues.push(field.label + ": unknown question")
-				else if (answer !== expected) issues.push(field.label + ": " + answer)
+				else if (answer !== expected) issues.push(field.label + ": " + field.choices?.[answer])
 				break
 			}
 		}
@@ -68,6 +67,8 @@ function review(responses: FormResponse[]): { decision: Decision | null; issues:
 
 export default new ClientEvent(Events.Raw, async (client, packet) => {
 	if (packet.t !== "GUILD_JOIN_REQUEST_CREATE" && packet.t !== "GUILD_JOIN_REQUEST_UPDATE") return
+
+	console.log(packet.t, JSON.stringify(packet.d, null, 2))
 
 	const { guild_id, request } = packet.d as { guild_id: string; request?: JoinRequest }
 	if (guild_id !== process.env.GUILD_ID || !request) return
