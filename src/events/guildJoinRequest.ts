@@ -68,8 +68,6 @@ function review(responses: FormResponse[]): { decision: Decision | null; issues:
 export default new ClientEvent(Events.Raw, async (client, packet) => {
 	if (packet.t !== "GUILD_JOIN_REQUEST_CREATE" && packet.t !== "GUILD_JOIN_REQUEST_UPDATE") return
 
-	console.log(packet.t, JSON.stringify(packet.d, null, 2))
-
 	const { guild_id, request } = packet.d as { guild_id: string; request?: JoinRequest }
 	if (guild_id !== process.env.GUILD_ID || !request) return
 	if (request.application_status !== "SUBMITTED" || inProgress.has(request.id)) return
@@ -88,6 +86,9 @@ export default new ClientEvent(Events.Raw, async (client, packet) => {
 					? { action: decision }
 					: { action: decision, rejection_reason: REJECTION_REASON }
 		})
+		console.log(
+			"Join request " + decision + ": " + (request.user?.username ?? "unknown") + " (" + request.user_id + ")"
+		)
 	} catch (error) {
 		console.error(error)
 
